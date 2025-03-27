@@ -1,4 +1,3 @@
-
 # gutenberg.py
 #
 # Reformats and renames the downloaded etexts.
@@ -6,13 +5,15 @@
 # Software by Michiel Overtoom, motoom@xs4all.nl, July 2009, amended April 2016.
 #
 
+
+# Updated in March 2025 by Lucas Marti
+
 import os
-import re
+import io
 import codecs
 import glob
 
-# Repetitive stuff I don't want to read a 1000 times on my eBook reader.
-remove = ["Produced by","End of the Project Gutenberg","End of Project Gutenberg"]
+import constants
 
 
 def encoding(fn):
@@ -22,25 +23,28 @@ def encoding(fn):
             return encoding.strip()
     return "latin1"
 
+
 codecmap = {
     "latin1": "latin1",
     "ISO Latin-1": "latin1",
     "ISO-8859-1": "latin1",
     "UTF-8": "utf8",
     "ASCII": "ascii",
-    }
+}
+
 
 def beautify(fn, outputdir):
-    ''' Reads a raw Project Gutenberg etext, reformat paragraphs,
+    """Reads a raw Project Gutenberg etext, reformat paragraphs,
     and removes fluff.  Determines the title of the book and uses it
-    as a filename to write the resulting output text. '''
+    as a filename to write the resulting output text."""
+    print(fn)
     codec = codecmap.get(encoding(fn), "latin1")
-    lines = [line.strip() for line in codecs.open(fn, "r", codec)]
+    lines = [line.strip() for line in codecs.open(fn, "rb", encoding="utf8")]
     collect = False
     lookforsubtitle = False
     outlines = []
     startseen = endseen = False
-    title=""
+    title = ""
     for line in lines:
         if line.startswith("Title: "):
             title = line[7:]
@@ -53,7 +57,11 @@ def beautify(fn, outputdir):
                 subtitle = line.strip()
                 subtitle = subtitle.strip(".")
                 title += ", " + subtitle
-        if ("*** START" in line) or ("***START" in line) or (line.startswith("*END THE SMALL PRINT!")):
+        if (
+            ("*** START" in line)
+            or ("***START" in line)
+            or (line.startswith("*END THE SMALL PRINT!"))
+        ):
             collect = startseen = True
             paragraph = ""
             continue
@@ -64,7 +72,7 @@ def beautify(fn, outputdir):
             continue
         if not line:
             paragraph = paragraph.strip()
-            for term in remove:
+            for term in constants.REMOVE:
                 if paragraph.startswith(term):
                     paragraph = ""
             if paragraph:
@@ -82,7 +90,7 @@ def beautify(fn, outputdir):
     ofn = title[:150] + ", " + lastpart
     ofn = ofn.replace("&", "en")
     ofn = ofn.replace("/", "-")
-    ofn = ofn.replace("\"", "'")
+    ofn = ofn.replace('"', "'")
     ofn = ofn.replace(":", ";")
     ofn = ofn.replace(",,", ",")
 
@@ -101,8 +109,17 @@ def beautify(fn, outputdir):
     f.write("\n".join(outlines))
     f.close()
 
-if not os.path.exists("ebooks"):
-    os.mkdir("ebooks")
 
-for fn in glob.glob("ebooks-unzipped/*.txt"):
-    beautify(fn, "ebooks")
+def check_dirs():
+    if not os.path.exists("ebooks"):
+        os.mkdir("ebooks")
+
+
+def process_txt_ebooks():
+    check_dirs()
+    for fn in glob.glob("ebooks-test/*.txt"):
+        beautify(fn, "ebooks")
+
+
+if __name__ == "__main__":
+    process_txt_ebooks()
