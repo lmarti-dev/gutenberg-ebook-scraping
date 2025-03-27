@@ -54,7 +54,7 @@ which is eventually extracted into 'ebooks-unzipped'. Other programs take it fro
 '''
 
 
-import urllib
+import urllib.request
 import re
 import os
 import zipfile
@@ -65,7 +65,7 @@ import glob
 import shutil
 
 MIRROR = "http://www.mirrorservice.org/sites/ftp.ibiblio.org/pub/docs/books/gutenberg/"
-LANGUAGE = "Dutch"
+LANGUAGE = "English"
 
 
 def older(a, b):
@@ -85,17 +85,17 @@ def fetch(mirrorurl, filename, outputfilename):
         modified = datetime.date.fromtimestamp(st.st_mtime)
         today = datetime.date.today()
         if modified == today:
-            print "%s exists, and is up-to-date. No need to download it." % outputfilename
+            print("%s exists, and is up-to-date. No need to download it." % outputfilename)
         else:
-            print "%d exists, but is out of date. Downloading..." % outputfilename
+            print("%d exists, but is out of date. Downloading..." % outputfilename)
             mustdownload = True
     else:
-        print "%s not found, downloading..." % outputfilename
+        print("%s not found, downloading..." % outputfilename)
         mustdownload = True
 
     if mustdownload:
         url = mirrorurl + filename
-        urllib.urlretrieve(url, outputfilename)
+        urllib.request.urlretrieve(url, outputfilename)
 
 
 # Ensure directories exist.
@@ -112,27 +112,27 @@ if not os.path.exists("ebooks-unzipped"):
 # Download the book index, and unzip it.
 fetch(MIRROR, "GUTINDEX.zip", "indexes/GUTINDEX.zip")
 if not os.path.exists("indexes/GUTINDEX.ALL") or older("indexes/GUTINDEX.ALL", "indexes/GUTINDEX.zip"):
-    print "Extracting GUTINDEX.ALL from GUTINDEX.zip..."
+    print("Extracting GUTINDEX.ALL from GUTINDEX.zip...")
     zipfile.ZipFile("indexes/GUTINDEX.zip").extractall("indexes/")
 else:
-    print "No need to extract GUTINDEX.ALL"
+    print("No need to extract GUTINDEX.ALL")
 
 
 # Download the file index, and gunzip it.
 fetch(MIRROR, "ls-lR.gz", "indexes/ls-lR.gz")
 if not os.path.exists("indexes/ls-lR") or older("indexes/ls-lR", "indexes/ls-lR.gz"):
-    print "Extracting ls-lR from ls-lR.gz..."
+    print("Extracting ls-lR from ls-lR.gz...")
     inf = gzip.open("indexes/ls-lR.gz", "rb")
     outf = open("indexes/ls-lR", "wb")
     outf.write(inf.read())
     inf.close()
     outf.close()
 else:
-    print "No need to extract ls-lR"
+    print("No need to extract ls-lR")
 
 
 # Parse the file index
-print "Parsing file index..."
+print("Parsing file index...")
 mirrordir = {}
 mirrorname = {}
 re_txt0file = re.compile(r".*? (\d+\-0\.zip)") # UTF-8 encoded (?)
@@ -159,7 +159,7 @@ for line in open("indexes/ls-lR"):
         elif "." in filename: # For filenames like '32901.zip'.
             nr, _ = filename.split(".")
         else:
-            print "Unexpected filename:", filename
+            print("Unexpected filename:", filename)
         ebookno = int(nr)
         if not ebookno in mirrordir:
             mirrordir[ebookno] = lastseendir
@@ -167,7 +167,7 @@ for line in open("indexes/ls-lR"):
 
 
 # Parse the GUTINDEX.ALL file and extract all language-specific titles from it.
-print "Parsing book index..."
+print("Parsing book index...")
 inpreamble = True
 ebooks = {} # number -> title
 ebookslanguage = {} # number -> language
@@ -212,12 +212,12 @@ for line in codecs.open("indexes/GUTINDEX.ALL", encoding="utf8"):
             continue # Missing or invalid ebook number
 
 # Default language is English; mark every eBook which hasn't a language specified as English.
-for nr, title in ebooks.iteritems():
+for nr, title in ebooks.items():
     if not nr in ebookslanguage:
         ebookslanguage[nr] = "English"
 
 if 1:
-    # Print report of found eBooks.
+    # print(report of found eBooks.)
     nr = 0
     for ebookno in sorted(ebooks.keys()):
         if ebookslanguage[ebookno] != LANGUAGE:
@@ -225,9 +225,9 @@ if 1:
         titel = ebooks[ebookno].encode("ascii", "replace")
         filename = mirrorname.get(ebookno, "UNKNOWN")
         filedir = mirrordir.get(ebookno, "UNKNOWN")
-        print "%d. %s (%s in %s)" % (ebookno, titel, filename, filedir)
+        print("%d. %s (%s in %s)" % (ebookno, titel, filename, filedir))
         nr += 1
-    print "%d ebooks found for language %s" % (nr, LANGUAGE)
+    print("%d ebooks found for language %s" % (nr, LANGUAGE))
 
 # Fetch the eBook zips.
 for nr, ebookno in enumerate(sorted(ebooks.keys())):
@@ -240,11 +240,11 @@ for nr, ebookno in enumerate(sorted(ebooks.keys())):
     url = MIRROR + filedir + "/" + filename
     fn = os.path.join("ebooks-zipped", filename)
     if os.path.exists(fn):
-        print "(%d/%d) %s exists, download not necessary" % (nr, len(ebooks), fn)
+        print("(%d/%d) %s exists, download not necessary" % (nr, len(ebooks), fn))
     else:
-        print "(%d/%d) downloading %s..." % (nr, len(ebooks), fn)
+        print("(%d/%d) downloading %s..." % (nr, len(ebooks), fn))
         # Slow with FTP mirrors; prefer a HTTP mirror.
-        urllib.urlretrieve(url, fn)
+        urllib.request.urlretrieve(url, fn)
 
         # Fast, but requires external wget utility.
         # cmd = "wget -O %s %s" % (fn, url)
@@ -253,7 +253,7 @@ for nr, ebookno in enumerate(sorted(ebooks.keys())):
 # Unzip them.
 errors = []
 for fn in glob.glob("ebooks-zipped/*.zip"):
-    print "extracting", fn
+    print("extracting", fn)
     try:
         zipfile.ZipFile(fn).extractall("ebooks-unzipped/")
     except zipfile.BadZipfile:
@@ -262,7 +262,7 @@ for fn in glob.glob("ebooks-zipped/*.zip"):
 # Some extracted files will end up in a subdirectory. Move them up into 'ebooks-unzipped' and remove the empty subdirectory.
 for dirn in glob.glob("ebooks-unzipped/*"):
     if os.path.isdir(dirn):
-        print "moving", dirn
+        print("moving", dirn)
         for fn in glob.glob(os.path.join(dirn, "*")):
             parts = fn.split(os.sep)
             ofn = os.path.join("ebooks-unzipped", parts[-1])
@@ -272,6 +272,6 @@ for dirn in glob.glob("ebooks-unzipped/*"):
         os.rmdir(dirn)
 
 if errors:
-    print "Errors:"
+    print("Errors:")
     for error in errors:
-        print error
+        print(error)

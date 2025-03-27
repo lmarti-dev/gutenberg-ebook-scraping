@@ -25,7 +25,7 @@ for fullfn in glob.glob("ebooks/*.txt"):
 
 # Distribute the files over the destination directories.
 approxfilespersubdir = len(fns) / subdircount
-print "%s text files in total, to be tossed into %s subdirectories, approximately %d files per subdirectory" % (len(fns), subdircount, approxfilespersubdir)
+print("%s text files in total, to be tossed into %s subdirectories, approximately %d files per subdirectory" % (len(fns), subdircount, approxfilespersubdir))
 currentsubdir = 0
 filesinsubdir = 0
 for i in range(26):
@@ -48,7 +48,7 @@ for s in subdirletters:
     if not os.path.isdir(subdirname):
         os.mkdir(subdirname)
     for letter in s:
-        print "Tossing files starting with '%s' to '%s'" % (letter, subdirname)
+        print("Tossing files starting with '%s' to '%s'" % (letter, subdirname))
         for fn in fns:
             startletter = fn[0].lower()
             startletter = min(max(startletter, 'a'), 'z')

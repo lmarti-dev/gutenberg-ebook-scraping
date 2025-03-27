@@ -88,14 +88,14 @@ def beautify(fn, outputdir):
 
     # Report on anomalous situations, but don't make it a showstopper.
     if not title:
-        print ofn
-        print "    Problem: No title found\n"
+        print(ofn)
+        print("    Problem: No title found\n")
     if not startseen:
-        print ofn
-        print "    Problem: No '*** START' seen\n"
+        print(ofn)
+        print("    Problem: No '*** START' seen\n")
     if not endseen:
-        print ofn
-        print "    Problem: No '*** END' seen\n"
+        print(ofn)
+        print("    Problem: No '*** END' seen\n")
 
     f = codecs.open(os.path.join(outputdir, ofn), "w", "utf8")
     f.write("\n".join(outlines))
