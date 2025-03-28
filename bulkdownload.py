@@ -70,6 +70,7 @@ from pathlib import Path
 import json
 import io
 import constants
+from utils import load_manifest, create_manifest, get_manifest_fpath
 
 
 def zip_to_txt(s: str, append: str = "") -> str:
@@ -168,18 +169,11 @@ def make_folders():
         os.mkdir(constants.UNZIPPED_FOLDER)
 
 
-def parse_index():
-    manifest_fpath = Path(constants.HOME, constants.MANIFEST_FILENAME)
-    if manifest_fpath.is_file():
-        print(f"{manifest_fpath} exists")
-        f = io.open(manifest_fpath, "r", encoding="utf8").read()
-        jobj = json.loads(f)
-        return (
-            jobj["ebooks"],
-            jobj["ebookslanguage"],
-            jobj["mirrordir"],
-            jobj["mirrorname"],
-        )
+def parse_index(override_manifest: bool):
+    manifest = load_manifest()
+    if manifest is not None and not override_manifest:
+        ebooks, ebookslanguage, mirrordir, mirrorname = manifest
+        return ebooks, ebookslanguage, mirrordir, mirrorname
     # Download the book index, and unzip it.
     fetch(constants.MIRROR, "GUTINDEX.zip", f"{constants.INDEXES_FOLDER}/GUTINDEX.zip")
     if not os.path.exists(f"{constants.INDEXES_FOLDER}/GUTINDEX.ALL") or older(
@@ -289,23 +283,9 @@ def parse_index():
                 ebooks[ebookno] = title
             except ValueError:
                 continue  # Missing or invalid ebook number
-
-    if not manifest_fpath.is_file():
-        with io.open(manifest_fpath, "w+", encoding="utf8") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "ebooks": ebooks,
-                        "ebookslanguage": ebookslanguage,
-                        "mirrordir": mirrordir,
-                        "mirrorname": mirrorname,
-                    },
-                    ensure_ascii=False,
-                    indent=4,
-                )
-            )
-            f.close()
-            print(f"Wrote {manifest_fpath}")
+    manifest_fpath = get_manifest_fpath()
+    if not manifest_fpath.is_file() or override_manifest:
+        create_manifest(ebooks, ebookslanguage, mirrordir, mirrorname)
     return ebooks, ebookslanguage, mirrordir, mirrorname
 
 
@@ -316,23 +296,22 @@ def download_ebooks(
     mirrorname: dict,
     print_report: bool = True,
 ):
-    # Default language is English; mark every eBook which hasn't a language specified as English.
     for nr, title in ebooks.items():
         if not nr in ebookslanguage:
-            ebookslanguage[nr] = "English"
-
+            ebookslanguage[nr] = constants.DEFAULT_LANGUAGE
     if print_report:
         # print(report of found eBooks.)
         nr = 0
         for ebookno in sorted(ebooks.keys()):
             if ebookslanguage[ebookno] != constants.LANGUAGE:
                 continue
-            titel = ebooks[ebookno].encode("ascii", "replace")
-            filename = mirrorname.get(ebookno, "UNKNOWN")
-            filedir = mirrordir.get(ebookno, "UNKNOWN")
-            print("%d. %s (%s in %s)" % (ebookno, titel, filename, filedir))
-            nr += 1
-        print("%d ebooks found for language %s" % (nr, constants.LANGUAGE))
+            else:
+                titel = ebooks[ebookno].encode("ascii", "replace")
+                filename = mirrorname.get(ebookno, "UNKNOWN")
+                filedir = mirrordir.get(ebookno, "UNKNOWN")
+                print("%d. %s (%s in %s)" % (ebookno, titel, filename, filedir))
+                nr += 1
+        print(f"{nr} ebooks found for language {constants.LANGUAGE}")
 
     # Fetch the eBook zips.
     n_ebooks = len(ebooks)
@@ -355,10 +334,6 @@ def download_ebooks(
             if not filename.startswith("0") and not file_exists:
                 print(f"({nr}/{n_ebooks}) downloading {filename}...")
                 urlretrieve_try_alt(url, filename)
-
-            # Fast, but requires external wget utility.
-            # cmd = "wget -O %s %s" % (fn, url)
-            # os.system(cmd)
 
 
 def unzip_files():

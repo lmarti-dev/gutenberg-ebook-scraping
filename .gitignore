@@ -3,7 +3,7 @@
 /ebooks-zipped
 /ebooks-test
 /ebooks
-
+manifest.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
