@@ -1,5 +1,5 @@
 
-= Original README
+# Original README
 
 This is a set of python scripts which downloads all 
 Dutch ebooks from Project Gutenberg, renames them to
@@ -25,7 +25,7 @@ from Gutenberg's main web site. This newer version:
 - better input encoding detection
 - outputs UTF8 encoded text files
 
-= March 2025 update
+# March 2025 update
 
 I improved the code in a few places. Notably,
 
