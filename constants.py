@@ -5,10 +5,14 @@ LANGUAGE = "English"
 HOME = Path(__file__).parent
 ALT = ["", "-0", "-8"]
 
+
+EBOOKS_FOLDER = "ebooks"
 ZIPPED_FOLDER = "ebooks-zipped"
 UNZIPPED_FOLDER = "ebooks-unzipped"
 INDEXES_FOLDER = "indexes"
 
+
+UNKNOWN_TITLE = "UNKNOWN_TITLE"
 MANIFEST_FILENAME = f"manifest_{LANGUAGE}.json"
 
 # Repetitive stuff I don't want to read a 1000 times on my eBook reader.

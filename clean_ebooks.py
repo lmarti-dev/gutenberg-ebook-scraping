@@ -10,10 +10,11 @@
 
 import os
 import io
-import codecs
 import glob
-
+import re
 import constants
+from pathlib import Path
+from charset_normalizer import from_bytes
 
 
 def encoding(fn):
@@ -24,22 +25,20 @@ def encoding(fn):
     return "latin1"
 
 
-codecmap = {
-    "latin1": "latin1",
-    "ISO Latin-1": "latin1",
-    "ISO-8859-1": "latin1",
-    "UTF-8": "utf8",
-    "ASCII": "ascii",
-}
+def prepare_title(title: str, fn: str) -> str:
+    if title == "":
+        title = constants.UNKNOWN_TITLE
+    title = title[:100]
+    title = re.sub(r"\W", "_", title)
+    return f"{title}_{fn}"
 
 
-def beautify(fn, outputdir):
+def beautify(fpath: str, outputdir: str):
     """Reads a raw Project Gutenberg etext, reformat paragraphs,
     and removes fluff.  Determines the title of the book and uses it
     as a filename to write the resulting output text."""
-    print(fn)
-    codec = codecmap.get(encoding(fn), "latin1")
-    lines = [line.strip() for line in codecs.open(fn, "rb", encoding="utf8")]
+    print(fpath)
+    lines = [str(from_bytes(line.strip()).best()) for line in io.open(fpath, "rb")]
     collect = False
     lookforsubtitle = False
     outlines = []
@@ -83,29 +82,22 @@ def beautify(fn, outputdir):
             paragraph += " " + line
 
     # Compose a filename.  Replace some illegal file name characters with alternatives.
-    lastpart = fn
-    parts = fn.split(os.sep)
-    if len(parts):
-        lastpart = parts[-1]
-    ofn = title[:150] + ", " + lastpart
-    ofn = ofn.replace("&", "en")
-    ofn = ofn.replace("/", "-")
-    ofn = ofn.replace('"', "'")
-    ofn = ofn.replace(":", ";")
-    ofn = ofn.replace(",,", ",")
+
+    filename = Path(fpath).name
+    title_filename = prepare_title(title, filename)
 
     # Report on anomalous situations, but don't make it a showstopper.
     if not title:
-        print(ofn)
-        print("    Problem: No title found\n")
+        print(filename)
+        print("    Problem: No title found")
     if not startseen:
-        print(ofn)
-        print("    Problem: No '*** START' seen\n")
+        print(filename)
+        print("    Problem: No '*** START' seen")
     if not endseen:
-        print(ofn)
-        print("    Problem: No '*** END' seen\n")
+        print(filename)
+        print("    Problem: No '*** END' seen")
 
-    f = codecs.open(os.path.join(outputdir, ofn), "w", "utf8")
+    f = io.open(Path(constants.HOME, outputdir, title_filename), "w+", encoding="utf8")
     f.write("\n".join(outlines))
     f.close()
 
@@ -118,7 +110,7 @@ def check_dirs():
 def process_txt_ebooks():
     check_dirs()
     for fn in glob.glob("ebooks-test/*.txt"):
-        beautify(fn, "ebooks")
+        beautify(fn, constants.EBOOKS_FOLDER)
 
 
 if __name__ == "__main__":
