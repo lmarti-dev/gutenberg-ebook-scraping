@@ -57,7 +57,8 @@ def beautify(fpath: str, catalog_title: str, outputdir: str):
     Use the title from the manifest.
     Converts everything to utf8
     """
-    lines = [str(from_bytes(line.strip()).best()) for line in io.open(fpath, "rb")]
+    lines = str(from_bytes(io.open(fpath, "rb").read()).best()).splitlines()
+
     collect = False
     outlines = []
     startseen = endseen = False

@@ -34,5 +34,5 @@ I improved the code in a few places. Notably,
 - The ebook info is saved in a manifest.json file to avoid running some costly for loops again. 
 - Some ebooks were not stored in zip format but rather in txt. The code now looks for likely filename alternatives before giving up.
 - `sift.py` allows one to peek at the largest ebooks (some of them are 200MB) to see whether they're worth keeping. 
-- The final ebooks have a json snippet in the first line so that one can get the information easily.
+- The final ebooks have a json snippet in the first line so that one can get the information easily using a single `readline()`
 - Important values are set in `constants.py`
